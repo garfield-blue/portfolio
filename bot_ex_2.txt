@@ -1,0 +1,705 @@
+import discord
+from discord.ext import commands
+import asyncio
+from random import choice
+import tkinter as tk
+import threading
+import tkinter as tk
+import discord
+
+# --- Configuration du bot Discord ---
+TOKEN = "LOL"
+#intents = discord.Intents.default()
+#intents.message_content = True  # Ajoute ceci !
+#intents.members = True
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+# --- Configuration du bot ---
+GUILD_ID = 1257391688540753990  # Remplace par l'ID de ton serveur Discord
+ROLE_NAME = "Goat"  # Nom du rôle à donner
+
+le_bg_ultime = (1185455268964859916, "@py_trombone")
+
+parler = {}
+
+
+
+
+#file = discord.File("C:/Users/Nathan/Desktop/projet_python/discorde/mon_bot_dev_perso/#musk.png", filename="musk.png")
+embed_musk = discord.Embed(title="💦💦💦")
+embed_musk.set_image(url="https://upload.wikimedia.org/wikipedia/commons/4/49/Elon_Musk_2015.jpg")
+
+#@bot.event
+#async def on_ready():
+#    print("le bot est en ligne")
+
+@bot.event
+async def on_ready():
+    for guild in bot.guilds:
+        await guild.chunk()  # Force le chargement de tous les membres
+    print(f"✅ {bot.user} est connecté !")
+
+
+
+
+
+@bot.event
+async def on_message(message : discord.Message):
+    global parler
+    if not message.author.bot:
+        print(message.content)
+
+        for name, value in parler.items():
+
+            if value and name == str(message.author):
+                await message.delete()
+                return None
+
+        await bot.process_commands(message)
+
+
+
+
+@bot.command()
+async def nathan(ctx):
+    await ctx.send("🍒")
+
+@bot.command()
+async def jean(ctx):
+    await ctx.send("🍆")
+
+
+
+
+
+
+
+@bot.command()
+async def random(ctx, *message:str):
+    await ctx.send(choice(message))
+
+
+@random.error
+async def random_error(ctx, error):
+    await ctx.send("Veuillez fournir tous les arguments nécessaires pour cette commande !")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@bot.command()
+async def sug(ctx, message):
+    user_mention = ctx.author.mention
+    message = await ctx.send(f"@everyone \nSuggestion de {user_mention}:\n{message}")
+    emoji1 = '👎'#🔼🔽👎👍
+    emoji2 = '👍'
+    await message.add_reaction(emoji1)
+    await message.add_reaction(emoji2)
+    await ctx.message.delete()
+
+
+@bot.command()
+async def hot(ctx):
+    #await ctx.send(embed=embed)
+    await ctx.send(embed=embed_musk)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@bot.command()
+async def carrée(ctx, *nb):
+    try:
+        nb = int(nb[0])
+
+    except ValueError:
+        await ctx.send("il faut préciser UN NOMBRE en parametre")
+
+    except IndexError:
+        await ctx.send("il faut préciser UN NOMBRE en parametre")
+
+    else:
+        print(nb)
+        await ctx.send(f"{nb}*{nb}= {nb**2}")
+
+
+
+
+@bot.command()
+async def peroquet(ctx, nb:int, *, message:str):
+    for i in range(nb):
+        await ctx.send(message)
+
+
+@peroquet.error
+async def peroquet_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Veuillez fournir tous les arguments nécessaires pour cette commande !")
+    if isinstance(error, commands.errors.BadArgument):
+        await ctx.send("Veuillez fournir tous les bons arguments nécessaires pour cette commande !")
+
+
+
+
+@bot.command()
+async def clear(ctx, amount: int=1) ->discord.Message:
+    is_in_private_msg = ctx.guild is None and isinstance(ctx.author, discord.User)
+    if is_in_private_msg:
+        return await ctx.send("non")
+
+    has_permition = ctx.author.guild_permissions.manage_messages
+    if not has_permition:
+        return await ctx.send("pas la permition mon coco")
+
+
+    is_limit_reatch = amount > 100
+    if is_limit_reatch:
+        return await ctx.send("tu ne peux pas suprimer plus de 100")
+
+    is_text_channel = isinstance(ctx.channel, discord.TextChannel)
+    if not is_text_channel:
+        return await ctx.send("tu dois utiliser cette commande dans salon de texte")
+
+    await ctx.channel.purge(limit=amount+1)
+    #await ctx.send("🍆")
+
+
+
+
+@bot.command()
+async def ban(ctx, member: discord.Member, *, reason: str=""):
+    is_in_private_msg = ctx.guild is None and isinstance(ctx.author, discord.User)
+    if is_in_private_msg:
+        return await ctx.send("non")
+
+    has_permition = ctx.author.guild_permissions.manage_messages
+    if not has_permition:
+        return await ctx.send("tu n'as pas la permition")
+
+    is_bannable = ctx.author.top_role > member.top_role
+    if not is_bannable:
+        return await ctx.send("le membre que tu veux bannir a un grade plus élever que toi")
+
+    if reason == "":
+        reason = "pas de raison definie"
+
+
+    await member.ban(reason=reason)
+    await ctx.send(f"{member.name} a été bannie: {reason}")
+
+
+
+
+@bot.command()
+@commands.has_permissions(ban_members=True)
+async def unban(ctx, id: int):
+    try:
+        user = await bot.fetch_user(id)
+        await ctx.guild.unban(user)
+
+        embed = discord.Embed(title="L'utilisateur a été débanni avec succès.", color=discord.Color.green())
+    except:
+        embed = discord.Embed(title="Une erreur est survenue lors du débannissement de l'utilisateur.", color=discord.Color.red())
+
+    await ctx.reply(embed=embed)
+
+
+
+
+@bot.command()
+async def kick(ctx, member: discord.Member, *, reason: str=""):
+    is_in_private_msg = ctx.guild is None and isinstance(ctx.author, discord.User)
+    if is_in_private_msg:
+        return await ctx.send("non")
+
+    has_permition = ctx.author.guild_permissions.kick_members
+    if ctx.author.id != le_bg_ultime[0] and not has_permition:
+        return await ctx.send("tu n'as pas la permition")
+
+    is_kick = ctx.author.top_role > member.top_role
+    if ctx.author.id != le_bg_ultime[0] and not is_kick:
+        return await ctx.send("le membre que tu veux kick a un grade plus élever que toi")
+
+    if reason == "":
+        reason = "pas de raison definie"
+
+
+    await member.kick(reason=reason)
+    return await ctx.send(f"{member.name} a été kick: {reason}")
+
+
+
+
+@bot.command()
+async def tg(ctx, member: discord.Member, time: int=1):
+    global parler
+    is_in_private_msg = ctx.guild is None and isinstance(ctx.author, discord.User)
+    if is_in_private_msg:
+        return await ctx.send("non")
+
+    #is_bannable = ctx.author.top_role > member.top_role
+    #if not is_bannable:
+    #return await ctx.send("le membre que tu veux fare se taire a un grade pluséleverquetoi")
+
+    parler[member.name] = True
+    await ctx.send(f"{member.name} va fermer sa bouche pendant {time}min")
+    await asyncio.sleep(time*60)
+    parler[member.name] = False
+    await ctx.send(f"{member.name} peut re parler {time}min")
+
+
+@tg.error
+async def tg_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Veuillez fournir tous les arguments nécessaires pour cette commande!")
+    if isinstance(error, commands.errors.BadArgument):
+        await ctx.send("les argument presiser ne sont pas corespondant a ceu demander !")
+
+
+
+
+
+@bot.command()
+async def commande_inutil_1(ctx):
+    if ctx.author.id == le_bg_ultime[0]:
+        role = discord.utils.get(ctx.guild.roles, name="Goat")
+        guild = ctx.guild
+        member = guild.get_member(le_bg_ultime[0])
+        await member.add_roles(role)
+    await ctx.send("cette commande est inutile")
+
+
+@bot.command()
+async def commande_inutil_2(ctx):
+    if ctx.author.id == le_bg_ultime[0]:
+        role = discord.utils.get(ctx.guild.roles, name="Goat")
+        guild = ctx.guild
+        member = guild.get_member(le_bg_ultime[0])
+        await member.remove_roles(role)
+    await ctx.send("cette commande est inutile")
+
+
+
+
+
+
+
+
+
+
+## --- Fonction pour envoyer un message sur Discord ---
+#async def send_message(channel_id, message):
+#    channel = bot.get_channel(channel_id)
+#    if channel:
+#        await channel.send(message)
+#
+#
+##async def goat_put(ctx):
+##    role = discord.utils.get(ctx.guild.roles, name="Goat")
+##    guild = ctx.guild
+##    member = guild.get_member(le_bg_ultime[0])
+##    await member.add_roles(role)
+##    await ctx.send("cette commande est inutile")
+#
+#async def give_role(role_name):
+#    guild = bot.get_guild(GUILD_ID)
+#    if not guild:
+#        print("❌ Impossible de trouver le serveur.")
+#        return
+#    role = discord.utils.get(guild.roles, name=role_name)
+#    if not role:
+#        print("❌ Rôle introuvable.")
+#        return
+#    member = guild.get_member(le_bg_ultime[0])
+#    if not member:
+#        print("❌ Membre introuvable.")
+#        return
+#    await member.add_roles(role)
+#    print(f"✅ Rôle '{role_name}' ajouté à {member.display_name}")
+#
+#
+#async def supr_role(role_name):
+#    guild = bot.get_guild(GUILD_ID)
+#    if not guild:
+#        print("❌ Impossible de trouver le serveur.")
+#        return
+#    role = discord.utils.get(guild.roles, name=role_name)
+#    if not role:
+#        print("❌ Rôle introuvable.")
+#        return
+#    member = guild.get_member(le_bg_ultime[0])
+#    if not member:
+#        print("❌ Membre introuvable.")
+#        return
+#    await member.remove_roles(role)
+#    print(f"✅ Rôle '{role_name}' ajouté à {member.display_name}")
+#
+#
+#
+#
+## --- Interface Tkinter ---
+#class DiscordTkApp:
+#    def __init__(self, window):
+#        self.window = window
+#
+#        #on met une immage au debut pour décorer
+#        img = tk.PhotoImage(file="invite de commande/trollface_96.png")
+#
+#        img_label = tk.Label(self.window, image=img, bg="#000000")
+#        img_label.pack()
+#
+#
+#        #on met un label immage au debut pour décorer
+#        deco_label = tk.Label(
+#            self.window, 
+#            text='HELLO WORLD !', 
+#            height=1, 
+#            width=15, 
+#            bg="#000000", 
+#            font=("Consolas", 20), 
+#            fg="#FFFFFF", 
+#            bd=0
+#            )
+#        deco_label.pack()
+#
+#        #on met une zone de text por ecrir les commande
+#        text_zone = tk.Text(
+#            self.window, 
+#            height=6, 
+#            width=28, 
+#            bg="#242424", 
+#            font=("Consolas", 11), 
+#            fg="#FFFFFF", 
+#            highlightbackground="#313131", 
+#            highlightcolor="#313131", 
+#            highlightthickness=2, 
+#            insertbackground="red", 
+#            bd=0, 
+#            selectbackground="yellow", 
+#            selectforeground="red" 
+#            )
+#        text_zone.pack()
+#
+#        text_zone.insert("1.0", "/> help")
+#
+#        #on fait un bouton pour valider la commande
+#        button_run = tk.Button(
+#            self.window, 
+#            text="run", 
+#            bg="#000000", 
+#            fg="#FFFFFF", 
+#            height=1, 
+#            width=4, 
+#            font=("Consolas", 13), 
+#            command=lambda : self.execute_command(text_zone.get("1.0", "end-1c"))
+#            )
+#        button_run.pack(padx=10, pady=10)
+#
+#
+#        self.return_label = tk.Label(
+#            self.window, 
+#            text='', 
+#            height=12, 
+#            width=38, 
+#            bg="#000000", 
+#            font=("Consolas", 10), 
+#            fg="#FFFFFF", 
+#            bd=0)
+#        self.return_label.pack()
+#
+#
+#
+#    def execute_command(self, command:str):
+#        print([command])
+#        
+#        
+#        print([command[:2]])
+#        print([command[:3]])
+#        print([command[4:]])
+#        print([command[:6]])
+#        if command[:3] == "/> ":
+#            command = command[:4] + command[4:].replace("\n", "")
+#            #command = command[:4] + command[4:].replace(" ", "").replace("\n", "")
+#            print([command])
+#        if command == "/> help":
+#            self.return_label.config(text="Commandes disponibles :\n/> help : Afficher l'aide\n/> exit : Quitter\n/> hello : Dire bonjour")
+#
+#        elif command == "/> exit":
+#            window.destroy()
+#
+#        elif command[:12] == "/> write_msg":
+#            message = command.split("(")[1].split(")")[0]
+#            channel_id = 1258802225757556849  # Remplace par l'ID de ton salon Discord
+#            if message:
+#                bot.loop.create_task(send_message(channel_id, message))  # Envoie le message
+#
+#        elif command[:12] == "/> give_role":
+#            message = command.split("(")[1].split(")")[0]
+#            role_name = command.split("(")[1].split(")")[0]
+#            bot.loop.create_task(give_role(role_name))  # Envoie le message
+#
+#        elif command[:12] == "/> supr_role":
+#            role_name = command.split("(")[1].split(")")[0]
+#            bot.loop.create_task(supr_role(role_name))  # Envoie le message
+#
+#        elif command[:6] == "/> add": 
+#            parameters = command.split("(")[1].split(")")[0].split(",")
+#            result = 0
+#            for parameter in parameters:
+#                result += int(parameter)
+#            self.return_label.config(text=result)
+#            
+#        else:
+#            self.return_label.config(text="Commande inconnue. \nEssayez 'help' pour la\n liste des commandes.")
+#
+## --- Lancer le bot Discord dans un thread ---
+#def run_discord_bot():
+#    bot.run(TOKEN)
+#
+## --- Lancer Tkinter dans le thread principal ---
+#if __name__ == "__main__":
+#    #on instancie la fenettre
+#    window = tk.Tk()
+#    #on nome la fenettre
+#    window.title("HELLO WORLD !")
+#    #on ajuste la fenettre
+#    window.geometry("300x500")
+#    window.minsize(300, 500)
+#    #on met la couleur de fond
+#    window.config(background="#000000")
+#
+#    # Lancer Discord dans un thread à part
+#    discord_thread = threading.Thread(target=run_discord_bot, daemon=True)
+#    discord_thread.start()
+#
+#    # Lancer Tkinter dans le thread principal
+#    app = DiscordTkApp(window)
+#    window.mainloop()
+#
+#
+#
+#
+
+
+
+
+
+
+
+
+# --- Fonction pour envoyer un message sur Discord ---
+async def send_message(channel_id, message):
+    channel = bot.get_channel(channel_id)
+    if channel:
+        await channel.send(message)
+
+
+#async def goat_put(ctx):
+#    role = discord.utils.get(ctx.guild.roles, name="Goat")
+#    guild = ctx.guild
+#    member = guild.get_member(le_bg_ultime[0])
+#    await member.add_roles(role)
+#    await ctx.send("cette commande est inutile")
+
+async def give_role(role_name, id_player):
+    if id_player == "le_bg":
+        id_player = le_bg_ultime[0]
+    guild = bot.get_guild(GUILD_ID)
+    if not guild:
+        print("❌ Impossible de trouver le serveur.")
+        return
+    
+    role = discord.utils.get(guild.roles, name=role_name)
+    if not role:
+        print("❌ Rôle introuvable.")
+        return
+
+    #member = guild.get_member(id_player)
+    member = guild.get_member(le_bg_ultime[0])
+    print(member)
+    if not member:
+        print("❌ Membre introuvable.")
+        return
+    await member.add_roles(role)
+    print(f"✅ Rôle '{role_name}' ajouté à {member.display_name}")
+
+
+async def supr_role(role_name, id_player):
+    if id_player == "le_bg":
+        id_player = le_bg_ultime[0]
+    guild = bot.get_guild(GUILD_ID)
+    if not guild:
+        print("❌ Impossible de trouver le serveur.")
+        return
+    role = discord.utils.get(guild.roles, name=role_name)
+    if not role:
+        print("❌ Rôle introuvable.")
+        return
+    member = guild.get_member(id_player)
+    if not member:
+        print("❌ Membre introuvable.")
+        return
+    await member.remove_roles(role)
+    print(f"✅ Rôle '{role_name}' ajouté à {member.display_name}")
+
+
+
+
+# --- Interface Tkinter ---
+class DiscordTkApp:
+    def __init__(self, window):
+        self.window = window
+
+        #on met une immage au debut pour décorer
+        img = tk.PhotoImage(file="invite de commande/trollface_96.png")
+
+        img_label = tk.Label(self.window, image=img, bg="#000000")
+        img_label.pack()
+
+
+        #on met un label immage au debut pour décorer
+        deco_label = tk.Label(
+            self.window, 
+            text='HELLO WORLD !', 
+            height=1, 
+            width=15, 
+            bg="#000000", 
+            font=("Consolas", 20), 
+            fg="#FFFFFF", 
+            bd=0
+            )
+        deco_label.pack()
+
+        #on met une zone de text por ecrir les commande
+        text_zone = tk.Text(
+            self.window, 
+            height=6, 
+            width=28, 
+            bg="#242424", 
+            font=("Consolas", 11), 
+            fg="#FFFFFF", 
+            highlightbackground="#313131", 
+            highlightcolor="#313131", 
+            highlightthickness=2, 
+            insertbackground="red", 
+            bd=0, 
+            selectbackground="yellow", 
+            selectforeground="red" 
+            )
+        text_zone.pack()
+
+        text_zone.insert("1.0", "/> help")
+
+        #on fait un bouton pour valider la commande
+        button_run = tk.Button(
+            self.window, 
+            text="run", 
+            bg="#000000", 
+            fg="#FFFFFF", 
+            height=1, 
+            width=4, 
+            font=("Consolas", 13), 
+            command=lambda : self.execute_command(text_zone.get("1.0", "end-1c"))
+            )
+        button_run.pack(padx=10, pady=10)
+
+
+        self.return_label = tk.Label(
+            self.window, 
+            text='', 
+            height=12, 
+            width=38, 
+            bg="#000000", 
+            font=("Consolas", 10), 
+            fg="#FFFFFF", 
+            bd=0)
+        self.return_label.pack()
+
+
+
+    def execute_command(self, command:str):
+        print([command])
+        
+        
+        print([command[:2]])
+        print([command[:3]])
+        print([command[4:]])
+        print([command[:6]])
+        if command[:3] == "/> ":
+            command = command[:4] + command[4:].replace("\n", "")
+            #command = command[:4] + command[4:].replace(" ", "").replace("\n", "")
+            print([command])
+        if command == "/> help":
+            self.return_label.config(text="Commandes disponibles :\n/> help : Afficher l'aide\n/> exit : Quitter\n/> hello : Dire bonjour")
+
+        elif command == "/> exit":
+            window.destroy()
+
+        elif command[:12] == "/> write_msg":
+            message = command.split("(")[1].split(")")[0]
+            channel_id = 1258802225757556849  # Remplace par l'ID de ton salon Discord
+            if message:
+                bot.loop.create_task(send_message(channel_id, message))  # Envoie le message
+
+        elif command[:12] == "/> give_role":
+            message = command.split("(")[1].split(")")[0].split(",")
+            #role_name = command.split("(")[1].split(")")[0]
+            print(int(message[1]))
+            bot.loop.create_task(give_role(message[0], int(message[1])))  # Envoie le message
+
+        elif command[:12] == "/> supr_role":
+            message = command.split("(")[1].split(")")[0].split(",")
+            #role_name = command.split("(")[1].split(")")[0]
+            bot.loop.create_task(supr_role(message[0], int(message[1])))  # Envoie le message
+
+        elif command[:6] == "/> add": 
+            parameters = command.split("(")[1].split(")")[0].split(",")
+            result = 0
+            for parameter in parameters:
+                result += int(parameter)
+            self.return_label.config(text=result)
+            
+        else:
+            self.return_label.config(text="Commande inconnue. \nEssayez 'help' pour la\n liste des commandes.")
+
+# --- Lancer le bot Discord dans un thread ---
+def run_discord_bot():
+    bot.run(TOKEN)
+
+# --- Lancer Tkinter dans le thread principal ---
+if __name__ == "__main__":
+    #on instancie la fenettre
+    window = tk.Tk()
+    #on nome la fenettre
+    window.title("HELLO WORLD !")
+    #on ajuste la fenettre
+    window.geometry("300x500")
+    window.minsize(300, 500)
+    #on met la couleur de fond
+    window.config(background="#000000")
+
+    # Lancer Discord dans un thread à part
+    discord_thread = threading.Thread(target=run_discord_bot, daemon=True)
+    discord_thread.start()
+
+    # Lancer Tkinter dans le thread principal
+    app = DiscordTkApp(window)
+    window.mainloop()
